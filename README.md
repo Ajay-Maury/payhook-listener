@@ -20,7 +20,7 @@ It validates incoming signatures, parses JSON payloads, and stores payment event
 
 ### 1. Clone repo
 ```bash
-git clone https://github.com/<your-username>/payhook-listener.git
+git clone https://github.com/Ajay-Maury/payhook-listener.git
 cd payhook-listener
 ````
 
