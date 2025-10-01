@@ -12,3 +12,32 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+
+enum EventTypeEnum {
+  payment_authorized
+  payment_captured
+  payment_failed
+}
+
+enum PaymentStatusEnum {
+  authorized
+  captured
+  failed
+}
+
+model PaymentEvent {
+  id          Int          @id @default(autoincrement())
+  event_id    String       @unique
+  event_type  EventTypeEnum
+  payment_id  String
+  status      PaymentStatusEnum
+  amount      Int
+  currency    String
+  received_at DateTime     @default(now())
+  is_active   Boolean      @default(true)
+  created_at  DateTime     @default(now())
+  updated_at  DateTime     @updatedAt
+
+  @@index([payment_id])
+}
