@@ -1,98 +1,156 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# PayHook Listener Service
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+A NestJS application that simulates a webhook listener (e.g., Razorpay, PayPal).  
+It validates incoming signatures, parses JSON payloads, and stores payment events in PostgreSQL using Prisma ORM.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+---
 
-## Description
+## 🚀 Features
+- NestJS + Prisma ORM + PostgreSQL
+- HMAC-SHA256 signature validation (`X-Razorpay-Signature`)
+- Captures raw body for correct signature verification
+- Strict DTO validation with `class-validator`
+- Idempotency: duplicate events (same `event_id`) are ignored
+- Query API to fetch all events for a given `payment_id`
+- Docker + Docker Compose support
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+---
 
-## Project setup
+## 🛠️ Setup (Local Development)
+
+### 1. Clone repo
+```bash
+git clone https://github.com/<your-username>/payhook-listener.git
+cd payhook-listener
+````
+
+### 2. Install dependencies
 
 ```bash
-$ npm install
+npm install
 ```
 
-## Compile and run the project
+### 3. Configure environment variables
+
+Copy `.env.example` to `.env` and update if needed:
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+cp .env.example .env
 ```
 
-## Run tests
+Default `.env.example` values:
+
+```dotenv
+# Postgres
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+POSTGRES_DB=webhooks
+POSTGRES_HOST=db
+POSTGRES_PORT=5432
+
+# App
+PORT=3000
+SHARED_SECRET=test_secret   # Shared secret for HMAC validation
+NODE_ENV=development
+
+# Prisma
+DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}?schema=public
+```
+
+### 4. Run Postgres with Docker Compose
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+docker compose up -d db
 ```
 
-## Deployment
+This runs PostgreSQL inside Docker and exposes it on `localhost:5434`.
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+### 5. Run Prisma migrations
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+# If running Prisma locally on your Mac:
+DATABASE_URL=postgresql://postgres:postgres@localhost:5434/webhooks npx prisma migrate dev --name init
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+### 6. Start the app
 
-## Resources
+```bash
+npm run start:dev
+```
 
-Check out a few resources that may come in handy when working with NestJS:
+App will be running at:
+👉 [http://localhost:3000/api](http://localhost:3000/api)
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+---
 
-## Support
+## 🐳 Running everything in Docker
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+```bash
+docker compose up --build
+```
 
-## Stay in touch
+This builds the NestJS app and runs migrations on startup.
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+---
 
-## License
+## 🧪 Testing the Webhook
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+### 1. Example payload
+
+Save as `mock_payloads/payment_authorized.json`:
+
+```json
+{
+  "event": "payment.authorized",
+  "payload": {
+    "payment": {
+      "entity": {
+        "id": "pay_001",
+        "status": "authorized",
+        "amount": 1000,
+        "currency": "INR"
+      }
+    }
+  },
+  "created_at": 1751885965,
+  "id": "evt_auth_001"
+}
+```
+
+### 2. Compute HMAC
+
+```bash
+SIG=$(cat mock_payloads/payment_authorized.json | \
+node -e "const fs=require('fs');const crypto=require('crypto');const d=fs.readFileSync(0);console.log(crypto.createHmac('sha256','test_secret').update(d).digest('hex'))")
+```
+
+### 3. Send curl
+
+```bash
+curl -X POST http://localhost:3000/api/webhook/payments \
+  -H "Content-Type: application/json" \
+  -H "X-Razorpay-Signature: $SIG" \
+  --data-binary @mock_payloads/payment_authorized.json
+```
+
+**Response**
+
+```json
+{ "success": true, "message": "Event saved" }
+```
+
+---
+
+## ✅ Edge Cases Handled
+
+* **Missing/invalid signature** → 403 Forbidden
+* **Invalid JSON** → 400 Bad Request
+* **Missing required fields** → 400 Bad Request (via DTO validation)
+* **Duplicate `event_id`** → ignored safely
+* **Unsupported event type string (e.g., `payment.failed`)** → normalized (`payment_failed`)
+
+---
+
+## 📜 API Documentation
+
+See [DOCS.md](./DOCS.md).
